@@ -1,0 +1,13 @@
+{
+    "business": "18&ok",
+    "target_profit": 100000.0,
+    "location_node": "East Baton Rouge, LA",
+    "status": "AGGRESSIVE_RUNNING",
+    "parameters": {
+        "wholesale_markup_percentage": 0.45,
+        "jewelry_premium_multiplier": 1.75,
+        "lead_generation_velocity": "MAX",
+        "ad_spend_distribution": "NATIONAL_INTERNATIONAL"
+    },
+    "strategy_mode": "MAX_VELOCITY_EXPANSION"
+}
