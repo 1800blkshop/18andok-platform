@@ -1,0 +1,32 @@
+name: 18&ok Autonomous Core Execution Loop
+
+on:
+  schedule:
+    # Wakes up your engine automatically every single hour to optimize sales pipelines
+    - cron: '0 * * * *'
+  workflow_dispatch: # Retains a button in your dashboard to manual-override if preferred
+
+jobs:
+  optimize-business:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Allows your runner to modify code and push updates back natively
+
+    steps:
+    - name: Access Codebase Repositories
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Initialize Stable Python Runtime
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Deploy Core Libraries Automatically
+      run: |
+        python -m pip install --upgrade pip
+        pip install yfinance gitpython
+
+    - name: Launch Autonomous Profit Optimization Loop
+      run: python autonomous_agent.py
