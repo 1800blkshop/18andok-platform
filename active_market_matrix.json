@@ -1,14 +1,13 @@
-# 18andok-platform
-Connecting the plug 🔌 to the socket.
-
-This repository contains a lightweight autonomous market strategy agent that reads live market data,
-updates the `active_market_matrix.json` file, and optionally syncs changes back to GitHub when a
-valid token is available in the environment.
-
-## Quick start
-
-```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-python autonomous_agent.py
+{
+    "business": "18&ok",
+    "target_profit": 100000.0,
+    "location_node": "East Baton Rouge, LA",
+    "status": "AGGRESSIVE_RUNNING",
+    "parameters": {
+        "wholesale_markup_percentage": 0.45,
+        "jewelry_premium_multiplier": 1.75,
+        "lead_generation_velocity": "MAX",
+        "ad_spend_distribution": "NATIONAL_INTERNATIONAL"
+    },
+    "strategy_mode": "MAX_VELOCITY_EXPANSION"
+}
