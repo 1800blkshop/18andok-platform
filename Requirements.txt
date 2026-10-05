@@ -1,2 +1,6 @@
 requirements.txt
 pip freeze > requirements.txt
+# Project dependencies
+
+yfinance>=0.2.54
+GitPython>=3.1.43
