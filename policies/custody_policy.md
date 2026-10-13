@@ -1,36 +1,32 @@
-# Custody & Holding Policy — 18&ok LLC (Draft)
+# Custody Policy — Non-Custodial Default (18&ok LLC)
 
-Status: Draft for counsel & compliance review. The LLC intends to take title to assets under the LLC name. This policy documents required safeguards and operational controls while the LLC holds assets.
+Status: Draft for counsel & compliance review. 18&ok LLC will operate under a non-custodial default policy unless a separate, documented custody arrangement is expressly approved by legal and finance.
 
-1) Title & Registration
-- All title transfers must be supported by contract and closing documentation. For real property, obtain title insurance and record deeds per jurisdiction.
+Policy highlights
+1) Default stance: No custody or title holding
+- The Company will not take title to assets or custody of client funds unless a documented, approved custody agreement exists.
 
-2) Segregation of Assets & Funds
-- If investor funds are accepted to purchase assets, maintain per-investor accounting and segregated records. Avoid commingling where possible; use escrow/custodial accounts for third-party capital.
+2) Payment handling
+- The Company will collect service/consultation fees to its operating account.
+- Buyer/seller settlement must use escrow, a provider connected account (e.g., Stripe Connect), or direct bank transfer between counterparties.  
+- The Company will not commingle client funds with operating funds.
 
-3) Custody Arrangements
-- Securities: custody via licensed broker/custodian. Company will not self-custody securities outside a licensed custodian.
-- Real property: title through a licensed title/escrow company; deeds recorded in public registry.
-- Physical rare/exotic items: insured, climate-controlled storage or bonded warehouses with chain-of-custody documentation.
+3) Escrow and Connected-Account usage
+- For transactions requiring payout to sellers, use either:
+  - A licensed third-party escrow provider, OR
+  - Provider-managed connected accounts (Stripe Connect) with direct payouts to verified recipients.
 
-4) Insurance & Valuation
-- Maintain insurance covering theft, loss, and transit for physical items at replacement value.
-- Periodic valuation and impairment reviews for assets held.
+4) Asset custody exceptions
+- Any exception where the Company will take title must be:
+  - Approved in writing by legal and finance,
+  - Supported by a custody agreement with a qualified custodian or escrow provider, and
+  - Implemented with additional controls (insurance, segregated accounting, regulatory filings if necessary).
 
-5) KYC & Counterparty Vetting
-- KYC for sellers and buyers prior to any transfer or payout. Enhanced due diligence for high-value counterparties.
+5) Documentation & Audit
+- All introductions, fee captures, escrow instructions, and release approvals are recorded in the ledger.
+- KYC/AML, title/provenance, and insurance docs must be stored and retrievable for audits.
 
-6) Approval & Release Controls
-- Any asset disposition or payout requires documented approval: legal sign-off, finance clearance, and operations confirmation.
+6) Incident & Emergency
+- If custody is required unexpectedly (legal seizure, forced transfer), notify legal and finance immediately and follow incident runbook.
 
-7) Audit & Reconciliation
-- Daily reconciliation of settlements and ledger entries. Monthly audit trail exports for financial review and tax reporting.
-
-8) Record Retention
-- Retain title, provenance, insurance, and KYC documentation for the retention period required by law (consult counsel for exact duration).
-
-9) Emergency & Liquidation
-- Define emergency procedures to liquidate or transfer assets in the event of insolvency or regulatory action.
-
-10) Compliance Note
-- Taking title creates custody and fiduciary risks; consult counsel immediately for licensing and regulatory guidance.
+This policy reduces regulatory exposure by avoiding custody. Any deviation requires legal sign-off.

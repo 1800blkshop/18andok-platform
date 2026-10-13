@@ -1,8 +1,6 @@
-# Production Activation Runbook — Tailored for 18&ok LLC
+# Production Activation Runbook — Non-Custodial Mode (18&ok LLC)
 
-This runbook expands the earlier runbook to reflect that the LLC will take title to assets. It lists required sign-offs, owners, and a go/no-go checklist for production activation.
-
-[Follow the previously supplied comprehensive checklist here.]
+This runbook details go/no-go criteria and checks when operating in non-custodial mode (Company collects service fees only; settlements occur via escrow or connected accounts).
 
 Sign-off fields:
 - Legal (name / date):
@@ -12,18 +10,22 @@ Sign-off fields:
 - Technical (name / date):
 
 Go/No-Go criteria (all must be met):
-- Securities counsel check completed (if stocks involved): YES / NO
-- Money-transmission risk assessment completed: YES / NO
-- Custody arrangement or escrow in place for investor funds: YES / NO
-- KYC/AML integration completed and tested: YES / NO
-- Insurance and title/provenance verification processes in place: YES / NO
-- Reconciliation automation & reports in place: YES / NO
-- Manual approval gate configured and tested: YES / NO
-- Monitoring/alerts configured and tested: YES / NO
+- Counsel confirms non-custodial model reduces licensing risk for planned activities: YES / NO
+- KYC/AML screening provider integrated and tested: YES / NO
+- Payment provider configured to capture service fees and to instruct or coordinate escrow/Connect payouts: YES / NO
+- Webhook signature verification and replay protection implemented: YES / NO
+- Idempotency keys and retries tested in sandbox: YES / NO
+- Approval gating for fee capture configured and tested: YES / NO
+- Reconciliation automation in place for settlements and fee captures: YES / NO
 
-Rollback & emergency procedures
-- Disable LIVE_RUN environment variable and trigger incident response
-- Pause new acquisition intents and place open intents on hold
-- Notify legal & finance and begin containment
+Operational steps to enable service-fee capture (sandbox first)
+1) Set LIVE_RUN=false and use test provider keys.
+2) Ensure .env and secrets store only test keys.
+3) Run full sandbox flows: fee capture, webhook handling, idempotency replay, and ledger reconciliation.
+4) After counsel sign-off, test a staged pilot with a small set of vetted buyers/sellers.
 
-(Commit this file with attachments and update after counsel review.)
+Emergency rollback
+- Disable fee-capture by setting LIVE_RUN=false or flipping feature flag.
+- Put all new intents on hold and notify legal & finance.
+
+(Keep this file updated after counsel review.)

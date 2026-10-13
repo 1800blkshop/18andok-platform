@@ -1,28 +1,25 @@
-# Counsel Briefing Memo — 18&ok LLC
+# Counsel Briefing Memo — Non-Custodial Structure (18&ok LLC)
 
 Date: [INSERT DATE]
 
-Purpose: Request urgent legal advice and regulatory assessment. 18&ok LLC plans to operate as a matchmaker and operator that will take title to certain assets (stocks, parcels of land in South Baton Rouge, LA 70802, and high-value exotic/rare items) under the LLC name, hold them, and later resell to buyers. The company will also connect third-party capital to acquisitions and may accept investor funds in certain deals.
+Purpose: Request legal assessment. 18&ok LLC intends to operate as a matchmaker/introducer and will NOT take title or custody of assets or client funds by default. The Company will collect service/consultation fees only; settlement and title transfer will occur between buyer and seller (or via escrow/connected accounts).
 
 Key Questions for Counsel
-1) Securities & Broker-Dealer Risk
-   - If the company purchases stocks and holds them under LLC name, does this activity trigger broker-dealer registration or other securities licensing? What activities specifically (introducing, executing, custody, or advising) are most likely to trigger registration?  
+1) Confirmation of Non-Custodial Structure
+   - Does the proposed non-custodial structure (Company only collects fees and does not hold client funds or title) avoid broker-dealer, money transmission, or custody licensing in the jurisdictions where we operate?  
 
-2) Money Transmission & Payments
-   - If the LLC accepts investor capital or buyer payments and holds them in LLC accounts prior to purchase/resale, will this activity constitute money transmission under U.S. federal or state law?  
+2) Payments & Fee Capture
+   - What triggers would change our status to a money transmitter or require registration? Examples: temporarily holding funds, routing funds, receiving investor capital, pooled accounts.
 
-3) Custody & Fiduciary Risk
-   - By taking title on behalf of the business, what custody and fiduciary obligations arise? Are there recommended custody arrangements to mitigate licensing needs (e.g., use a third-party custodian or escrow for investor funds)?
+3) Escrow & Connected Accounts
+   - What specific escrow or connected-account architecture do you recommend to safely facilitate settlement and payouts without putting custody on the Company?
 
-4) Real Estate Questions (South Baton Rouge, LA 70802)
-   - Are there Louisiana-specific licensing or disclosure requirements when the LLC acquires and holds real property for resale?  
+4) Real Estate & Local Requirements (South Baton Rouge, LA 70802)
+   - Are there state-specific real estate brokerage or disclosure requirements even if Company acts merely as introducer?  
 
-5) Export / Import / Cultural Property
-   - For exotic/rare items we intend to acquire and resell internationally, what documentation, permits, or restrictions (CITES, export controls) must we verify?  
+5) Recommendations
+   - Immediate recommended protective clauses, contract language, and operational controls to reduce licensing risk.
 
-6) Recommendations
-   - Immediate recommended steps, regulatory filings, or registrational work needed to operate legally and safely.
+Attachments: updated one-page flow, buyer/seller agreement drafts, non-custodial policy.
 
-Attachments: one-page business flow, custody policy, draft buyer and seller agreement templates.
-
-Requested Deliverable: Written opinion memo and prioritized action items with estimated timelines and costs for compliance (including whether broker-dealer or money transmitter licensing is necessary).
+Requested Deliverable: Written opinion on regulatory risk and any required registrations or filings, plus suggested contract language to minimize custody/exposure.
