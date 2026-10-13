@@ -10,6 +10,10 @@ Flow:
 Safety defaults:
 - LIVE_RUN defaults to false; money will never flow without setting LIVE_RUN=true and configuring a real provider
 - AUTO_APPROVE defaults to false; approvals must be granted by creating an approval file or setting AUTO_APPROVE
+
+Update: This branch adds an accounting ledger (accounting.json) and records realized profits when a transaction
+is successfully completed in SANDBOX mode. This lets the system "make the profits" in bookkeeping without releasing
+real funds.
 """
 
 from __future__ import annotations
@@ -51,6 +55,7 @@ BASE_DIR = Path(__file__).resolve().parent
 TRANSACTIONS_FILE = BASE_DIR / "transactions.json"
 KYC_STATUS_FILE = BASE_DIR / "kyc_status.json"
 APPROVALS_DIR = BASE_DIR / "approvals"
+ACCOUNTING_FILE = BASE_DIR / "accounting.json"
 APPROVALS_DIR.mkdir(exist_ok=True)
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -141,6 +146,47 @@ def update_transaction_status(tx_id: str, status: str, extras: Optional[Dict[str
             break
     if changed:
         write_json_file(TRANSACTIONS_FILE, transactions)
+
+
+# Accounting helpers (record realized profits even if funds not released)
+def ensure_accounting_file():
+    if not ACCOUNTING_FILE.exists():
+        write_json_file(ACCOUNTING_FILE, [])
+
+
+def record_profit(tx_id: str) -> None:
+    ensure_accounting_file()
+    transactions = read_json_file(TRANSACTIONS_FILE, [])
+    tx = next((t for t in transactions if t.get("id") == tx_id), None)
+    if not tx:
+        logger.error("record_profit: transaction %s not found", tx_id)
+        return
+
+    # Compute profit using stored strings to avoid float conv issues
+    try:
+        buyer_price = safe_decimal(tx.get("buyer_target_price"))
+        supplier_cost = safe_decimal(tx.get("supplier_cost"))
+        gross_profit = buyer_price - supplier_cost if buyer_price is not None and supplier_cost is not None else None
+    except Exception:
+        gross_profit = None
+
+    accounting = read_json_file(ACCOUNTING_FILE, [])
+    entry = {
+        "id": uuid4().hex,
+        "tx_id": tx_id,
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "buyer_id": tx.get("buyer_id"),
+        "supplier_id": tx.get("supplier_id"),
+        "product_name": tx.get("product_name"),
+        "buyer_price": str(tx.get("buyer_target_price")),
+        "supplier_cost": str(tx.get("supplier_cost")),
+        "gross_profit": str(gross_profit) if gross_profit is not None else tx.get("gross_profit"),
+        "status": "REALIZED",
+        "note": "Profit realized in accounting ledger (sandbox). Funds not necessarily released to bank.",
+    }
+    accounting.append(entry)
+    write_json_file(ACCOUNTING_FILE, accounting)
+    logger.info("Recorded realized profit for tx %s: %s", tx_id, entry.get("gross_profit"))
 
 
 # KYC/AML stub — uses kyc_status.json for operators to mark IDs as clear
@@ -295,6 +341,11 @@ def handle_approval_and_transfer(tx: Dict[str, Any]) -> None:
     if result.get("success"):
         update_transaction_status(tx_id, "COMPLETED", extras={"provider_id": result.get("provider_id")})
         logger.info("Transaction %s completed via provider id=%s", tx_id, result.get("provider_id"))
+        # Record profit in accounting ledger even if funds remain in escrow
+        try:
+            record_profit(tx_id)
+        except Exception:
+            logger.exception("Failed to record profit for %s", tx_id)
     else:
         update_transaction_status(tx_id, "FAILED", extras={"provider_error": result.get("error")})
         logger.error("Transaction %s failed: %s", tx_id, result.get("error"))
@@ -365,6 +416,7 @@ if __name__ == "__main__":
     ensure_transactions_file()
     if not KYC_STATUS_FILE.exists():
         write_json_file(KYC_STATUS_FILE, {})
+    if not ACCOUNTING_FILE.exists():
+        write_json_file(ACCOUNTING_FILE, [])
 
     execute_arbitrage_scan()
-
