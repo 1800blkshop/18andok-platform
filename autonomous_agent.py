@@ -1,112 +1,190 @@
+#!/usr/bin/env python3
+"""
+Safe Autonomous Agent for 18&ok LLC (non-custodial / sandbox-first).
 
-import json
+- Uses Decimal for money calculations.
+- Records immutable ledger entries under corporate_ledger/.
+- Requires approval for large transactions.
+- Does NOT perform live payouts or settlements; LIVE_RUN must be explicitly enabled and accompanied
+  by provider integration and legal/compliance sign-offs.
+"""
+from __future__ import annotations
+
 import os
+import sys
+import logging
+import tempfile
+import json
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP, getcontext
+from datetime import datetime
 from pathlib import Path
+from typing import Dict, Any
 
-try:
-    import yfinance as yf
-except ImportError:
-    yf = None
+getcontext().prec = 28
+getcontext().rounding = ROUND_HALF_UP
 
-try:
-    from git import Repo
-except ImportError:
-    Repo = None
+# Config (via env)
+LOG_DIR = Path(os.getenv("CORP_LEDGER_DIR", "./corporate_ledger"))
+LOG_DIR.mkdir(parents=True, exist_ok=True)
+COMPLIANCE_LOG = LOG_DIR / "compliance_audit.log"
 
-BUSINESS_NAME = "18&ok"
-PROFIT_TARGET = 100000.00
-MARKET_LOCATION = "East Baton Rouge, LA"
+MIN_REQUIRED_MARGIN = Decimal(os.getenv("MIN_REQUIRED_MARGIN", "0.25"))
+MAX_AUTONOMOUS_TRANSACTION = Decimal(os.getenv("MAX_TRANSACTION_LIMIT", "5000.00"))
 
-def fetch_macro_indicators():
-    print("[1/4] Scanning global economic telemetry...")
-    metrics = {"sp500": None, "btc": None}
+LIVE_RUN = os.getenv("LIVE_RUN", "false").lower() in ("1", "true", "yes")
+DRY_RUN = os.getenv("DRY_RUN", "true").lower() in ("1", "true", "yes")
+AUTO_APPROVE = os.getenv("AUTO_APPROVE", "false").lower() in ("1", "true", "yes")
+APPROVAL_DIR = Path(os.getenv("APPROVAL_DIR", "./approvals"))
+APPROVAL_DIR.mkdir(parents=True, exist_ok=True)
 
-    if yf is None:
-        print("Warning: yfinance is not installed. Skipping live market data fetch.")
-        return metrics
+# Logging: console + append-only compliance file
+logger = logging.getLogger("autonomous_agent")
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    ch = logging.StreamHandler(sys.stdout)
+    ch.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] 18&ok LLC Agent: %(message)s"))
+    logger.addHandler(ch)
+    fh = logging.FileHandler(str(COMPLIANCE_LOG), mode="a", encoding="utf-8")
+    fh.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] 18&ok LLC Agent: %(message)s"))
+    logger.addHandler(fh)
 
-    try:
-        sp = yf.Ticker("^GSPC").history(period="1d")
-        btc = yf.Ticker("BTC-USD").history(period="1d")
 
-        if not sp.empty:
-            metrics["sp500"] = float(sp["Close"].iloc[-1])
-        if not btc.empty:
-            metrics["btc"] = float(btc["Close"].iloc[-1])
-    except Exception as exc:
-        print(f"Warning: Market data fetch interrupted: {exc}")
+def atomic_write_json(path: Path, data: Any) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile("w", delete=False, dir=str(path.parent), encoding="utf-8") as tf:
+        json.dump(data, tf, indent=2, default=str)
+        tf.flush()
+    Path(tf.name).replace(path)
 
-    return metrics
 
-def execute_strategic_rebalance(metrics):
-    print("[2/4] Recalculating margins for maximum conversion...")
+def ledger_entry(entry: Dict[str, Any]) -> Path:
+    """Write an immutable ledger record for auditing."""
+    trade_id = entry.get("trade_id") or f"trade_{int(datetime.utcnow().timestamp())}_{os.urandom(4).hex()}"
+    entry["recorded_at"] = datetime.utcnow().isoformat() + "Z"
+    path = LOG_DIR / f"{trade_id}.json"
+    atomic_write_json(path, entry)
+    logger.info("Ledger entry written: %s", path)
+    return path
 
-    operational_matrix = {
-        "business": BUSINESS_NAME,
-        "target_profit": PROFIT_TARGET,
-        "location_node": MARKET_LOCATION,
-        "status": "AGGRESSIVE_RUNNING",
-        "parameters": {
-            "wholesale_markup_percentage": 0.35,
-            "jewelry_premium_multiplier": 1.50,
-            "lead_generation_velocity": "MAX",
-            "ad_spend_distribution": "NATIONAL_INTERNATIONAL",
-        },
-    }
 
-    if metrics.get("sp500") and metrics["sp500"] > 5500:
-        operational_matrix["parameters"]["wholesale_markup_percentage"] = 0.45
-        operational_matrix["parameters"]["jewelry_premium_multiplier"] = 1.75
-        operational_matrix["strategy_mode"] = "MAX_VELOCITY_EXPANSION"
-    else:
-        operational_matrix["strategy_mode"] = "HIGH_CONVERSION_EFFICIENCY"
+def is_approved(intent_id: str) -> bool:
+    if AUTO_APPROVE:
+        return True
+    return (APPROVAL_DIR / f"{intent_id}.approved").exists()
 
-    return operational_matrix
 
-def write_market_matrix(matrix_data):
-    base_dir = Path(__file__).resolve().parent
-    matrix_file = base_dir / "active_market_matrix.json"
-    matrix_file.write_text(json.dumps(matrix_data, indent=4) + "\n", encoding="utf-8")
-    return matrix_file
+class AutonomousLLCAgent:
+    def __init__(self):
+        self.legal_name = "18&ok LLC"
+        self.trade_name = "OK"
+        self.location = "East Baton Rouge, LA"
 
-def sync_to_github(matrix_file):
-    if Repo is None:
-        print("[3/4] GitPython is not installed. Skipping git sync.")
-        return
+        try:
+            self.min_profit_margin = Decimal(os.getenv("MIN_REQUIRED_MARGIN", str(MIN_REQUIRED_MARGIN)))
+            self.max_transaction_limit = Decimal(os.getenv("MAX_TRANSACTION_LIMIT", str(MAX_AUTONOMOUS_TRANSACTION)))
+        except InvalidOperation:
+            self.min_profit_margin = MIN_REQUIRED_MARGIN
+            self.max_transaction_limit = MAX_AUTONOMOUS_TRANSACTION
 
-    try:
-        repo = Repo(str(matrix_file.parent))
-    except Exception as exc:
-        print(f"[3/4] Unable to open repository: {exc}")
-        return
+        # keys optional for sandbox; do NOT enable live transfers without explicit provider integration
+        self.stripe_key = os.getenv("STRIPE_SECRET_KEY")
+        self.openai_key = os.getenv("OPENAI_API_KEY")
 
-    if "origin" not in repo.remotes:
-        print("[3/4] No origin remote configured. Skipping git sync.")
-        return
+        if not self.openai_key:
+            logger.warning("OPENAI_API_KEY not set — AI outreach disabled for sandbox runs.")
+        if not self.stripe_key:
+            logger.info("STRIPE_SECRET_KEY not set — live payment captures disabled by default.")
 
-    token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
-    if not token:
-        print("[3/4] No GitHub token configured. Skipping git sync.")
-        return
+        self.system_active = True
+        logger.info("Autonomous agent initialized (LIVE_RUN=%s, DRY_RUN=%s).", LIVE_RUN, DRY_RUN)
 
-    print("[3/4] Packaging system modifications...")
-    with repo.config_writer() as writer:
-        writer.set_value("user", "name", "18andok Autonomous Agent")
-        writer.set_value("user", "email", "1800blkshop@gmail.com")
+    def audit_and_execute_deal(self, trade_payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Evaluate deal and (only in sandbox) record & simulate execution. Returns structured result."""
+        if not self.system_active:
+            logger.warning("System inactive. Execution blocked.")
+            return {"accepted": False, "reason": "system_inactive"}
 
-    repo.git.add(str(matrix_file.name))
-    if not repo.is_dirty(untracked_files=True):
-        print("[4/4] System optimal: No structural variation detected.")
-        return
+        asset = trade_payload.get("asset_name")
+        intent_id = trade_payload.get("intent_id") or f"intent-{os.urandom(6).hex()}"
+        try:
+            cost = Decimal(str(trade_payload.get("wholesale_cost")))
+            value = Decimal(str(trade_payload.get("international_market_value")))
+        except (InvalidOperation, TypeError):
+            logger.error("Invalid numeric values in payload")
+            return {"accepted": False, "reason": "invalid_numbers"}
 
-    print("[4/4] Activating autonomous git synchronization loop...")
-    repo.index.commit("AI Optimization Engine: Re-balanced parameters for $100k target.")
-    origin = repo.remote(name="origin")
-    origin.push()
-    print(">> Success: System parameters synchronized. Render deployment triggered automatically.")
+        if value == 0:
+            logger.error("Sell value cannot be zero")
+            return {"accepted": False, "reason": "zero_value"}
 
-if __name__ == "__main__":
-    market_signals = fetch_macro_indicators()
-    current_strategy = execute_strategic_rebalance(market_signals)
-    matrix_file = write_market_matrix(current_strategy)
-    sync_to_github(matrix_file)
+        gross_profit = (value - cost).quantize(Decimal("0.01"))
+        margin = (gross_profit / value).quantize(Decimal("0.0001"))
+
+        # Record an intent ledger before any action
+        intent_record = {
+            "trade_id": intent_id,
+            "asset_name": asset,
+            "supplier_cost": str(cost),
+            "buyer_price": str(value),
+            "gross_profit": str(gross_profit),
+            "margin": str(margin),
+            "buyer_id": trade_payload.get("buyer_id"),
+            "status": "INTENT_EVALUATED",
+        }
+        ledger_entry(intent_record)
+
+        # Margin check
+        if margin < self.min_profit_margin:
+            logger.info("Deal rejected: margin %s below required %s", margin, self.min_profit_margin)
+            ledger_entry({**intent_record, "status": "REJECTED_MARGIN"})
+            return {"accepted": False, "reason": "margin_too_low", "margin": str(margin)}
+
+        # Transaction limit check — require approval if exceeds autonomous cap
+        if cost > self.max_transaction_limit:
+            logger.warning("Cost %s exceeds autonomous limit %s; requires human approval", cost, self.max_transaction_limit)
+            ledger_entry({**intent_record, "status": "REQUIRES_APPROVAL"})
+            return {"accepted": False, "reason": "requires_approval", "cost": str(cost)}
+
+        # Approval gate for live-run
+        if LIVE_RUN and not is_approved(intent_id):
+            logger.warning("LIVE_RUN enabled but intent %s is not approved. Blocking live execution.", intent_id)
+            ledger_entry({**intent_record, "status": "BLOCKED_NO_APPROVAL"})
+            return {"accepted": False, "reason": "awaiting_approval", "intent_id": intent_id}
+
+        # At this point, in sandbox we simulate execution and record settlement
+        execution_id = f"exec-{os.urandom(6).hex()}"
+        execution_record = {
+            "trade_id": execution_id,
+            "intent_id": intent_id,
+            "asset_name": asset,
+            "supplier_cost": str(cost),
+            "buyer_price": str(value),
+            "gross_profit": str(gross_profit),
+            "margin": str(margin),
+            "status": "EXECUTED_SANDBOX" if not LIVE_RUN else "EXECUTED_LIVE_PENDING_SETTLEMENT",
+        }
+        ledger_entry(execution_record)
+
+        logger.info("[AUTONOMOUS] Intent %s executed with exec id %s (sandbox=%s)", intent_id, execution_id, not LIVE_RUN)
+
+        return {
+            "accepted": True,
+            "intent_id": intent_id,
+            "execution_id": execution_id,
+            "gross_profit": str(gross_profit),
+            "margin": str(margin),
+            "sandbox": not LIVE_RUN,
+        }
+
+    def trigger_monitoring_alert(self, asset: str, cost: Decimal) -> None:
+        payload = {
+            "event": "monitor_alert",
+            "asset": asset,
+            "cost": str(cost),
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+        }
+        logger.info("Monitor alert: %s", payload)
+        # Append a dedicated monitoring file
+        monitor_file = LOG_DIR / "monitor_events.jsonl"
+        with open(monitor_file, "a", encoding="utf-8") as f:
+            f.write(json.dumps(payload) + "\n")
